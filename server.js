@@ -5,20 +5,32 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-// Initialize Socket.io, allowing CORS for local development
+
+// ✅ UPDATED: Proper CORS configuration for Netlify + local development
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins for simplicity in this example
-        methods: ["GET", "POST"]
+        origin: [
+            "https://groupchatug.netlify.app",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "*" // Fallback for testing
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
-// Define the port
-const PORT = 3000;
+// Define the port (Render will use process.env.PORT)
+const PORT = process.env.PORT || 3000;
 
-// Serve the index.html file for the client
+// ✅ UPDATED: Add root route to avoid 404 errors
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.json({ 
+        message: 'Chat server is running', 
+        status: 'OK',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // --- In-Memory State Management (Temporary, replace with Firestore/Redis later) ---
@@ -125,9 +137,6 @@ io.on('connection', (socket) => {
 
 // Start the server
 server.listen(PORT, () => {
-    console.log(`🚀 Chat Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Chat Server running on port ${PORT}`);
     console.log(`To run: 1. Install dependencies (express, socket.io). 2. Run 'node server.js'`);
 });
-
-// The following line is needed to allow 'require' in this module
-// const require = (module) => { /* ... */ };
